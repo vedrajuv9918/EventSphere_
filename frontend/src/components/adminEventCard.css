@@ -68,4 +68,56 @@
 }
 
 .host-contact-item:hover {
-  text-decoration
+  text-decoration: underline;
+}
+
+.admin-status {
+  margin: 10px 0;
+  font-size: 15px;
+}
+
+.reject-msg {
+  background: #ffe0df;
+  padding: 8px;
+  border-radius: 10px;
+  margin-top: 5px;
+  border-left: 4px solid #c80000;
+}
+
+.admin-buttons {
+  margin-top: 10px;
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.approve-btn,
+.reject-btn {
+  min-width: 110px;
+  padding: 0 18px;
+  min-height: 36px;
+  border-radius: 16px;
+  border: none;
+  cursor: pointer;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.approve-btn {
+  background: #2ecc71;
+}
+
+.reject-btn {
+  background: #e74c3c;
+}
+
+.admin-buttons input {
+  flex: 1;
+  border: 1px solid #aaa;
+  padding: 0 14px;
+  border-radius: 16px;
+  min-height: 36px;
+}
