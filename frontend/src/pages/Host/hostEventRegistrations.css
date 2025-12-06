@@ -1,0 +1,99 @@
+.registrations-container {
+  padding: 30px;
+  max-width: 900px;
+  margin: auto;
+}
+
+/* Event Summary Box */
+.event-summary-box {
+  background: white;
+  padding: 25px;
+  border-radius: 26px;
+  box-shadow: 0px 5px 25px rgba(0,0,0,0.12);
+  margin-bottom: 25px;
+}
+
+.event-summary-box h2 {
+  margin-bottom: 12px;
+}
+
+.export-btn {
+  margin-top: 15px;
+  padding: 12px 20px;
+  border-radius: 22px;
+  background: #4b7bec;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.export-btn:hover {
+  background: #3867d6;
+}
+
+/* Registration List */
+.section-title {
+  font-size: 20px;
+  margin-bottom: 15px;
+}
+
+.registrations-list {
+  display: grid;
+  gap: 16px;
+}
+
+.registration-card {
+  background: white;
+  padding: 20px;
+  border-radius: 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0px 4px 14px rgba(0,0,0,0.1);
+}
+
+.registration-card h4 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.pay-status {
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.pay-status.success {
+  background: #d4f7d4;
+  color: #0b7c0b;
+}
+
+.pay-status.pending {
+  background: #fff1c2;
+  color: #8d6b00;
+}
+
+.pay-status.failed {
+  background: #ffd4d4;
+  color: #a80000;
+}
+
+.ticket-btn {
+  padding: 10px 16px;
+  border-radius: 18px;
+  background: #4b7bec;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+.ticket-btn:hover {
+  background: #3867d6;
+}
+
+.no-reg {
+  text-align: center;
+  color: #777;
+  font-size: 16px;
+}

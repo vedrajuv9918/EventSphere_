@@ -1,0 +1,105 @@
+.event-details-container {
+  max-width: 900px;
+  margin: auto;
+  padding: 30px;
+}
+
+/* Banner */
+.event-banner img {
+  width: 100%;
+  border-radius: 26px;
+  margin-bottom: 20px;
+}
+
+/* Info Card */
+.event-info-card {
+  background: white;
+  padding: 25px;
+  border-radius: 26px;
+  box-shadow: 0px 5px 25px rgba(0,0,0,0.12);
+}
+
+.event-info-card h1 {
+  margin: 0 0 10px 0;
+}
+
+/* Status Badge */
+.status-badge {
+  padding: 6px 14px;
+  border-radius: 18px;
+  font-size: 14px;
+  display: inline-block;
+  margin-bottom: 12px;
+}
+
+.status-badge.upcoming {
+  background: #d4f7d4;
+  color: #0d7a0d;
+}
+
+.status-badge.full {
+  background: #ffe5b0;
+  color: #946000;
+}
+
+.status-badge.pending {
+  background: #fff2bd;
+  color: #8d6b00;
+}
+
+.status-badge.rejected {
+  background: #ffd4d4;
+  color: #a80000;
+}
+
+.status-badge.completed {
+  background: #e6e6e6;
+  color: #555;
+}
+
+.event-date,
+.event-venue,
+.event-seats,
+.event-type {
+  margin: 6px 0;
+  font-size: 16px;
+}
+
+.team-info {
+  margin-bottom: 14px;
+  font-size: 16px;
+}
+
+.event-desc {
+  margin: 10px 0 20px 0;
+  line-height: 1.6rem;
+}
+
+.host-info {
+  margin: 12px 0;
+  font-size: 16px;
+  opacity: 0.8;
+}
+
+.register-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 22px;
+  border: none;
+  margin-top: 10px;
+  background: #4b7bec;
+  color: white;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.register-btn:hover {
+  background: #3867d6;
+}
+
+.info-note {
+  margin-top: 15px;
+  text-align: center;
+  font-size: 15px;
+  color: #777;
+}

@@ -1,0 +1,108 @@
+.profile-setup-container {
+  padding: 30px;
+  max-width: 520px;
+  margin: auto;
+}
+
+.step-card {
+  background: white;
+  padding: 25px;
+  border-radius: 26px;
+  box-shadow: 0px 5px 25px rgba(0,0,0,0.12);
+  transition: all 0.35s ease-in-out;
+}
+
+.step-content h2 {
+  margin-bottom: 18px;
+}
+
+input[type="text"],
+input[type="file"],
+input[type="date"] {
+  width: 100%;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid #aaa;
+  margin-bottom: 15px;
+}
+
+.role-options {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.role-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 16px;
+  border: none;
+  background: #e6e6e6;
+  cursor: pointer;
+}
+
+.role-btn.selected {
+  background: #4b7bec;
+  color: white;
+}
+
+.next-btn,
+.back-btn,
+.save-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 20px;
+  border: none;
+  background: #4b7bec;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.back-btn {
+  background: #aaa;
+}
+
+.interests-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.interest-tag {
+  padding: 10px 14px;
+  border-radius: 20px;
+  background: #eee;
+  cursor: pointer;
+}
+
+.interest-tag.selected {
+  background: #4b7bec;
+  color: white;
+}
+
+.profile-pic-preview img {
+  width: 130px;
+  height: 130px;
+  border-radius: 70px;
+  object-fit: cover;
+  margin-bottom: 12px;
+}
+
+.review-card {
+  text-align: center;
+}
+
+.review-card img {
+  width: 120px;
+  height: 120px;
+  border-radius: 70px;
+  object-fit: cover;
+  margin-top: 10px;
+}
+
+.step-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}

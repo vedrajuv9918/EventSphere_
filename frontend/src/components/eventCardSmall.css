@@ -1,0 +1,50 @@
+.event-small-card {
+  background: white;
+  padding: 20px;
+  border-radius: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0px 4px 14px rgba(0,0,0,0.1);
+}
+
+.left h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.left p {
+  font-size: 14px;
+  color: #555;
+}
+
+.status {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 5px 12px;
+  border-radius: 18px;
+  font-size: 12px;
+}
+
+.status.upcoming {
+  background: #d4f7d4;
+  color: #0d7a0d;
+}
+
+.status.completed {
+  background: #ffd4d4;
+  color: #a80000;
+}
+
+.ticket-btn {
+  padding: 10px 18px;
+  border-radius: 18px;
+  border: none;
+  background: #4b7bec;
+  color: white;
+  cursor: pointer;
+}
+
+.ticket-btn:hover {
+  background: #3867d6;
+}

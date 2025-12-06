@@ -1,0 +1,41 @@
+.events-container {
+  padding: 40px;
+}
+
+.events-title {
+  text-align: center;
+  font-size: 32px;
+  margin-bottom: 25px;
+}
+
+.search-box {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.search-box input {
+  width: 60%;
+  padding: 14px;
+  border: 2px solid #aaa;
+  border-radius: 25px;
+  font-size: 16px;
+  transition: 0.3s;
+}
+
+.search-box input:focus {
+  border-color: #4b7bec;
+  outline: none;
+}
+
+.events-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 22px;
+}
+
+.no-events {
+  text-align: center;
+  font-size: 18px;
+  margin-top: 40px;
+}
