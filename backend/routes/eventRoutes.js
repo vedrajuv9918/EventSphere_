@@ -2,7 +2,7 @@ const router = require("express").Router();
 const auth = require("../middleware/authMiddleware");
 const eventCtrl = require("../controllers/eventController");
 
-router.get("/all", eventCtrl.getAllEvents);
+router.get("/", eventCtrl.getAllEvents);
 router.get("/featured", eventCtrl.getFeaturedEvents);
 router.get("/team-size/:id", eventCtrl.getTeamSizeInfo);
 router.get("/my-registrations", auth, eventCtrl.getMyRegistrations);

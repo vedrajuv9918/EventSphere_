@@ -77,39 +77,39 @@ export default function AdminDashboard() {
     rejected: (statusBreakdown.rejected / totalStatusCount) * 360,
   };
 
+  const totalRegistrations = totals.registrations || 0;
+  const activeAttendees = Math.max(totalRegistrations - statusBreakdown.rejected * 5, 0);
+
   const trendDelta =
     registrationTrend.length > 1
       ? registrationTrend[registrationTrend.length - 1].count -
         registrationTrend[registrationTrend.length - 2].count
       : 0;
 
-  const totalRegistrations = totals.registrations || 0;
-  const activeAttendees = Math.max(totalRegistrations - statusBreakdown.rejected * 5, 0);
-
   const metricCards = [
     {
       label: "Total Users",
       value: formatNumber(totals.users || 0),
-      icon: "👤",
-      meta: "vs last month",
+      icon: "users",
+      change: "+12.5% from last month",
     },
     {
       label: "Approved Events",
       value: formatNumber(statusBreakdown.approved),
-      icon: "📅",
-      meta: "live and published",
+      icon: "calendar",
+      change: "+8.2% from last month",
     },
     {
-      label: "Total Registrations",
-      value: formatNumber(totalRegistrations),
-      icon: "🎟",
-      meta: trendDelta >= 0 ? `+${trendDelta} this week` : `${trendDelta} this week`,
+      label: "Total Revenues",
+      value: `₹${formatNumber(totals.revenue || 0)}`,
+      icon: "revenue",
+      change: "+23.1% from last month",
     },
     {
       label: "Active Attendees",
       value: formatNumber(activeAttendees),
-      icon: "📈",
-      meta: "checked-in / upcoming",
+      icon: "trend",
+      change: "+4.3% from last month",
     },
   ];
 
@@ -128,80 +128,61 @@ export default function AdminDashboard() {
     Math.max(...engagementBars.map((item) => item.value || 0), 1) || 1;
 
   return (
-    <div className="admin-page">
-      <div className="admin-shell">
-        <header className="admin-hero">
+    <div className="admin-dashboard">
+      <div className="admin-dashboard__shell">
+        <header className="admin-dashboard__hero">
           <div>
             <p className="eyebrow">Admin Dashboard</p>
-            <h1>System overview &amp; management</h1>
-            <p className="subtitle">Great to see you back, {adminName}!</p>
-          </div>
-          <div className="badge-chip">
-            <span>Role</span>
-            <strong>Administrator</strong>
+            <h1>Admin Dashboard</h1>
+            <p className="subtitle">System overview and management, {adminName}!</p>
           </div>
         </header>
 
-        <section className="metrics-grid">
+        <section className="admin-dashboard__metrics">
           {metricCards.map((metric) => (
-            <article className="metric-card" key={metric.label}>
-              <div className="metric-top">
+            <article className="admin-metric-card" key={metric.label}>
+              <div className="metric-header">
                 <p>{metric.label}</p>
-                <span className="metric-icon" aria-hidden="true">
-                  {metric.icon}
-                </span>
+                <span className={`metric-icon ${metric.icon}`} aria-hidden="true" />
               </div>
               <h3>{metric.value}</h3>
-              <p className="metric-meta">{metric.meta}</p>
+              <p className="metric-change">{metric.change}</p>
             </article>
           ))}
         </section>
 
-        <section className="insights-grid">
-          <article className="panel-card">
-            <header className="panel-header">
+        <section className="admin-insights-grid">
+          <article className="admin-panel">
+            <header className="panel-heading">
               <div>
                 <h2>Event Status Distribution</h2>
                 <p>Overview of event approval status</p>
               </div>
             </header>
-
-            <div className="status-content">
-              <div className="status-chart" style={chartBackground}></div>
+            <div className="status-split">
+              <div className="status-chart" style={chartBackground} />
               <div className="status-legend">
-                <div>
-                  <span className="swatch approved" />
-                  Approved: {statusBreakdown.approved}
-                </div>
-                <div>
-                  <span className="swatch pending" />
-                  Pending: {statusBreakdown.pending}
-                </div>
-                <div>
-                  <span className="swatch rejected" />
-                  Rejected: {statusBreakdown.rejected}
-                </div>
+                <p>Approved: {statusBreakdown.approved}</p>
+                <p>Pending: {statusBreakdown.pending}</p>
+                <p>Rejected: {statusBreakdown.rejected}</p>
               </div>
             </div>
           </article>
 
-          <article className="panel-card">
-            <header className="panel-header">
+          <article className="admin-panel">
+            <header className="panel-heading">
               <div>
                 <h2>User Engagement</h2>
                 <p>Registration and attendance metrics</p>
               </div>
             </header>
-
             <div className="engagement-bars">
               {engagementBars.map((item) => (
-                <div className="bar-col" key={item.label}>
+                <div className="bar" key={item.label}>
                   <div
-                    className="bar-fill"
-                    style={{
-                      height: `${(item.value / maxEngagementValue) * 100 || 0}%`,
-                    }}
-                  ></div>
+                    className="bar-value"
+                    style={{ height: `${(item.value / maxEngagementValue) * 100 || 0}%` }}
+                  />
                   <p>{item.label}</p>
                   <span>{formatNumber(item.value)}</span>
                 </div>
@@ -210,56 +191,19 @@ export default function AdminDashboard() {
           </article>
         </section>
 
-        <section className="panel-card">
-          <header className="panel-header">
+        <section className="admin-panel">
+          <header className="panel-heading">
             <div>
               <h2>Pending Event Approvals</h2>
               <p>Events awaiting your review</p>
             </div>
           </header>
-
-          <div className="event-list">
+          <div className="pending-list">
             {pendingEvents.length === 0 ? (
               <p className="empty-message">No pending events for approval</p>
             ) : (
               pendingEvents.map((event) => (
                 <AdminEventCard key={event._id} event={event} refresh={refreshAll} />
-              ))
-            )}
-          </div>
-        </section>
-
-        <section className="panel-card">
-          <header className="panel-header">
-            <div>
-              <h2>Approved Events</h2>
-              <p>Recently published events</p>
-            </div>
-          </header>
-          <div className="event-list">
-            {approvedEvents.length === 0 ? (
-              <p className="empty-message">No approved events yet</p>
-            ) : (
-              approvedEvents.map((event) => (
-                <AdminEventCard key={event._id} event={event} readonly />
-              ))
-            )}
-          </div>
-        </section>
-
-        <section className="panel-card">
-          <header className="panel-header">
-            <div>
-              <h2>Rejected Events</h2>
-              <p>Events declined with a reason</p>
-            </div>
-          </header>
-          <div className="event-list">
-            {rejectedEvents.length === 0 ? (
-              <p className="empty-message">No rejected events 🎉</p>
-            ) : (
-              rejectedEvents.map((event) => (
-                <AdminEventCard key={event._id} event={event} readonly />
               ))
             )}
           </div>

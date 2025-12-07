@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { UserService } from "../../services/userService";
 import "./profileSetup.css";
 
 export default function ProfileSetup() {
@@ -21,8 +22,7 @@ export default function ProfileSetup() {
   useEffect(() => {
     async function loadUser() {
       try {
-        const res = await fetch("/api/users/me");
-        const data = await res.json();
+        const data = await UserService.me();
         setUser(data);
 
         setForm({
@@ -56,29 +56,24 @@ export default function ProfileSetup() {
     const file = e.target.files[0];
     if (!file) return;
 
-    const fd = new FormData();
-    fd.append("profilePic", file);
-
-    const res = await fetch("/api/users/upload-profile-pic", {
-      method: "POST",
-      body: fd
-    });
-
-    const data = await res.json();
-
-    setForm({ ...form, profilePic: data.url });
+    try {
+      const data = await UserService.uploadProfilePhoto(file);
+      setForm({ ...form, profilePic: data.url });
+    } catch (err) {
+      console.log("Upload failed:", err);
+      alert(err.message || "Image upload failed");
+    }
   }
 
   async function saveProfile() {
-    const res = await fetch("/api/users/update-profile", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form)
-    });
-
-    const data = await res.json();
-    alert(data.message);
-    window.location.href = "/";
+    try {
+      const data = await UserService.updateProfile(form);
+      alert(data.message || "Profile updated");
+      window.location.href = "/";
+    } catch (err) {
+      console.log("Profile save failed:", err);
+      alert(err.message || "Failed to save profile");
+    }
   }
 
   if (!user) return <p className="loading">Loading...</p>;

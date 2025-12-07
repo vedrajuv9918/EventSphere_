@@ -5,53 +5,19 @@ import "./eventList.css";
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1000&q=80";
 
-const DUMMY_EVENTS = [
-  {
-    _id: "demo-aurora-summit",
-    title: "Aurora Tech Summit 2025",
-    description:
-      "A full-day deep dive into AI, cloud-native tooling, and developer productivity with hands-on labs.",
-    posterUrl:
-      "https://images.unsplash.com/photo-1503424886306-717c0d1d02d4?auto=format&fit=crop&w=1000&q=80",
-    date: "2025-02-15T09:00:00Z",
-    venue: "Skyline Convention Center, Bengaluru",
-    category: "Technology",
-    ticketPrice: 1499,
-    currentAttendees: 120,
-    maxAttendees: 200,
-    status: "approved",
-  },
-  {
-    _id: "demo-design-weekend",
-    title: "Design Weekend: Storytelling in Spaces",
-    description:
-      "Immersive design showcase featuring interactive installations, panels, and networking lounges.",
-    posterUrl:
-      "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1000&q=80",
-    date: "2025-03-02T15:30:00Z",
-    venue: "The Grid Art District, Mumbai",
-    category: "Arts",
-    ticketPrice: 999,
-    currentAttendees: 85,
-    maxAttendees: 150,
-    status: "approved",
-  },
-  {
-    _id: "demo-founder-forum",
-    title: "Founders' Forum: Scaling Sustainably",
-    description:
-      "Roundtables with climate-tech leaders, pitch lounge, and curated investor speed meets.",
-    posterUrl:
-      "https://images.unsplash.com/photo-1522199873710-1e2f9a1232f2?auto=format&fit=crop&w=1000&q=80",
-    date: "2025-01-28T11:00:00Z",
-    venue: "Seaport Hub, Chennai",
-    category: "Business",
-    ticketPrice: 0,
-    currentAttendees: 60,
-    maxAttendees: 120,
-    status: "approved",
-  },
-];
+const INR_FORMATTER = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  maximumFractionDigits: 0,
+  minimumFractionDigits: 0,
+});
+
+function formatPriceValue(value) {
+  if (value === null || value === undefined) return null;
+  const numeric = Number(value);
+  if (Number.isNaN(numeric)) return null;
+  return INR_FORMATTER.format(numeric);
+}
 
 const quickFilters = ["All Events", "Upcoming", "Completed", "Technology", "Business", "Arts"];
 
@@ -73,7 +39,7 @@ export default function EventList() {
       setError("");
       const data = await EventService.list();
       const normalized = Array.isArray(data) ? data : [];
-      setEvents(normalized.length ? normalized : DUMMY_EVENTS);
+      setEvents(normalized);
     } catch (err) {
       console.error("Error loading events", err);
       setError("Unable to load events right now. Please try again.");
@@ -155,31 +121,38 @@ export default function EventList() {
           <h1>Discover Events</h1>
           <p>Find and register for amazing events happening near you</p>
         </div>
-        <div className="hero-search-row">
-          <label className="search-field" aria-label="Search events">
-            <span className="search-icon" aria-hidden="true">
-              🔍
+        <div className="search-controls" role="group" aria-label="Search and filter events">
+          <div className="control-group" aria-label="Search events">
+            <span className="control-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="presentation">
+                <path
+                  d="M11 3a8 8 0 0 1 6.32 12.9l3.4 3.4a1 1 0 0 1-1.42 1.4l-3.38-3.38A8 8 0 1 1 11 3zm0 2a6 6 0 1 0 3.78 10.66l.34-.3.32-.37A6 6 0 0 0 11 5z"
+                  fill="currentColor"
+                />
+              </svg>
             </span>
             <input
               type="text"
-              placeholder="Search events"
+              placeholder="Search events..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              className="control-input"
             />
-          </label>
-          <label className="select-field" aria-label="Filter by category">
-            <span className="filter-icon" aria-hidden="true">
-              <svg viewBox="0 0 20 20" role="presentation">
+          </div>
+
+          <div className="control-group select-control" aria-label="Filter by category">
+            <span className="control-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="presentation">
                 <path
-                  d="M3 5h14l-5 6v4l-4 2v-6L3 5z"
+                  d="M4 5h16a1 1 0 0 1 .8 1.6L15 14v4a1 1 0 0 1-.55.9l-4 2A1 1 0 0 1 9 20v-6L3.2 6.6A1 1 0 0 1 4 5zm2.3 2 4.5 6.2a1 1 0 0 1 .2.6v4l2-1v-3a1 1 0 0 1 .2-.6L17.7 7H6.3z"
                   fill="currentColor"
-                  stroke="none"
                 />
               </svg>
             </span>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
+              className="control-select"
             >
               {categories.map((cat) => (
                 <option key={cat} value={cat}>
@@ -187,10 +160,10 @@ export default function EventList() {
                 </option>
               ))}
             </select>
-            <span className="select-icon" aria-hidden="true">
+            <span className="select-caret" aria-hidden="true">
               ▾
             </span>
-          </label>
+          </div>
         </div>
         <div className="filter-chips">
           {quickFilters.map((chip) => (
@@ -225,17 +198,29 @@ export default function EventList() {
           const attendees = event.maxAttendees
             ? `${event.currentAttendees || 0} / ${event.maxAttendees} attendees`
             : `${event.currentAttendees || 0} attendees`;
-          const price =
-            event.price || event.ticketPrice
-              ? `₹${event.price || event.ticketPrice}`
-              : "Free";
+          const rawPrice =
+            event.ticketPrice ??
+            event.price ??
+            event.amount ??
+            event.cost ??
+            event.ticket_price ??
+            null;
+          const formattedPrice = formatPriceValue(rawPrice);
+          const price = formattedPrice || "Free";
           const cta = getCTA(status);
+          const posterSrc =
+            event.posterUrl ||
+            event.imageUrl ||
+            event.poster ||
+            event.banner ||
+            event.coverImage ||
+            FALLBACK_IMAGE;
 
           return (
             <article key={event._id} className="event-card-modern">
               <div className="card-image">
                 <img
-                  src={event.posterUrl || event.imageUrl || FALLBACK_IMAGE}
+                  src={posterSrc}
                   alt={event.title}
                 />
                 <div className="card-badges">

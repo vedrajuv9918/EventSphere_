@@ -39,7 +39,7 @@ export default function HostDashboard() {
       setLoading(true);
       const [profile, myEvents] = await Promise.all([UserService.me(), HostService.myEvents()]);
       setUser(profile);
-      setEvents(myEvents);
+      setEvents(Array.isArray(myEvents) ? myEvents : []);
     } catch (err) {
       console.error("Host dashboard error", err);
       setError("Unable to load host dashboard data.");
@@ -48,13 +48,13 @@ export default function HostDashboard() {
     }
   }
 
-  const metrics = useMemo(() => {
+  const stats = useMemo(() => {
     const totalEvents = events.length;
-    const upcomingActive = events.filter((evt) => {
+    const activeUpcoming = events.filter((evt) => {
       if (!evt) return false;
       const eventDate = evt.date ? new Date(evt.date) : null;
       const future = eventDate ? eventDate > new Date() : true;
-      return evt.isActive && future && evt.status !== "rejected";
+      return (evt.isActive || evt.status === "approved") && future;
     }).length;
 
     const totalRegistrations = events.reduce(
@@ -68,38 +68,58 @@ export default function HostDashboard() {
     );
 
     return [
-      { label: "Total Events", value: totalEvents, icon: "📅" },
-      { label: "Active / Upcoming", value: upcomingActive, icon: "📈" },
-      { label: "Total Registrations", value: totalRegistrations, icon: "👥" },
-      { label: "Tickets Sold", value: ticketsSold, icon: "🎟" },
+      { label: "Total Events", value: totalEvents, icon: "calendar" },
+      { label: "Active/Upcoming", value: activeUpcoming, icon: "trending" },
+      { label: "Total Registrations", value: totalRegistrations, icon: "users" },
+      { label: "Tickets Sold", value: ticketsSold, icon: "ticket" },
     ];
   }, [events]);
 
   function formatDateTime(date) {
-    if (!date) return "Date TBD";
+    if (!date) return "Date TBA";
     return new Date(date).toLocaleString(undefined, {
-      weekday: "long",
       month: "long",
       day: "numeric",
+      year: "numeric",
       hour: "numeric",
       minute: "numeric",
     });
-  }
-
-  function seatsLeft(event) {
-    if (!event?.maxAttendees) return "Unlimited";
-    const left = event.maxAttendees - (event.currentAttendees || 0);
-    return left < 0 ? 0 : left;
   }
 
   function registrationCount(event) {
     return event?.currentAttendees || 0;
   }
 
-  function statusChip(event) {
-    const status = event?.status || "pending";
-    const label = status.charAt(0).toUpperCase() + status.slice(1);
-    return { label, className: status };
+  function seatsLeft(event) {
+    if (!event?.maxAttendees) return "Unlimited";
+    const left = event.maxAttendees - registrationCount(event);
+    return left < 0 ? 0 : left;
+  }
+
+  function ticketCount(event) {
+    return event.analytics?.totalTickets ?? registrationCount(event);
+  }
+
+  function currency(amount) {
+    return `₹${Number(amount || 0).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  }
+
+  function approvalChip(event) {
+    const status = (event?.status || event?.approvalStatus || "pending").toLowerCase();
+    if (status === "approved") return { label: "Approved", tone: "success" };
+    if (status === "rejected") return { label: "Rejected", tone: "danger" };
+    if (status === "pending") return { label: "Pending", tone: "neutral" };
+    return { label: status.charAt(0).toUpperCase() + status.slice(1), tone: "neutral" };
+  }
+
+  function scheduleChip(event) {
+    if (event.date && new Date(event.date) < new Date()) {
+      return { label: "Completed", tone: "ghost" };
+    }
+    return { label: "Upcoming", tone: "ghost" };
   }
 
   async function handleExportCSV(event) {
@@ -191,36 +211,38 @@ export default function HostDashboard() {
   if (!user) return null;
 
   return (
-    <div className="host-page">
-      <div className="host-shell">
-        <header className="host-hero">
+    <div className="host-dashboard">
+      <div className="host-dashboard__shell">
+        <header className="host-dashboard__hero">
           <div>
             <p className="eyebrow">Host Dashboard</p>
-            <h1>Manage your events, {user.name?.split(" ")[0] || "host"}!</h1>
-            <p className="subtitle">Keep track of your live registrations and performance.</p>
+            <h1>Host Dashboard</h1>
+            <p className="subtitle">Manage your events, {user.name?.split(" ")[0] || "host"}!</p>
           </div>
-          <button type="button" className="primary ghost" onClick={openCreateModal}>
+          <button type="button" className="btn primary" onClick={openCreateModal}>
             + Create New Event
           </button>
         </header>
 
-        <section className="host-metrics-grid">
-          {metrics.map((metric) => (
-            <article className="host-metric-card" key={metric.label}>
-              <div className="metric-icon">{metric.icon}</div>
-              <p className="metric-label">{metric.label}</p>
-              <h3>{metric.value}</h3>
+        <section className="host-dashboard__stats">
+          {stats.map((stat) => (
+            <article className="host-stat-card" key={stat.label}>
+              <span className={`stat-icon ${stat.icon}`} aria-hidden="true" />
+              <div>
+                <p>{stat.label}</p>
+                <strong>{stat.value}</strong>
+              </div>
             </article>
           ))}
         </section>
 
-        <section className="host-events-card">
-          <header className="panel-header">
+        <section className="host-events-panel">
+          <header className="host-panel__header">
             <div>
               <h2>Your Events</h2>
               <p>Manage and view your hosted events</p>
             </div>
-            <button type="button" className="ghost-btn" onClick={openCreateModal}>
+            <button type="button" className="btn ghost" onClick={openCreateModal}>
               + Create Event
             </button>
           </header>
@@ -230,80 +252,76 @@ export default function HostDashboard() {
           ) : (
             <div className="host-event-list">
               {events.map((event) => {
-                const status = statusChip(event);
-                const revenue =
-                  (event.analytics?.totalTickets || 0) * (event.ticketPrice || 0);
+                const approval = approvalChip(event);
+                const schedule = scheduleChip(event);
+                const revenue = (event.ticketPrice || 0) * ticketCount(event);
+                const attendees = registrationCount(event);
+
+                const disableAttendeeActions = attendees === 0;
 
                 return (
-                  <article className="host-event-card" key={event._id}>
-                    <div className="event-head">
+                  <article className="host-event" key={event._id}>
+                    <div className="host-event__top">
                       <div>
                         <h3>{event.title}</h3>
-                        <div className="chip-row">
-                          <span className={`status-chip ${status.className}`}>
-                            {status.label}
-                          </span>
-                          <span className="status-chip ghost">
-                            {event.date && new Date(event.date) > new Date()
-                              ? "Upcoming"
-                              : "Completed"}
-                          </span>
+                        <div className="badge-row">
+                          <span className={`chip ${approval.tone}`}>{approval.label}</span>
+                          <span className={`chip ${schedule.tone}`}>{schedule.label}</span>
                         </div>
                       </div>
-                      <div className="price-tag">
-                        ₹{Number(event.ticketPrice || 0).toLocaleString()}
-                      </div>
+                      <div className="ticket-price">{currency(event.ticketPrice)}</div>
                     </div>
 
-                    <div className="event-meta">
+                    <div className="host-event__meta">
                       <p>
-                        <span>📅</span> {formatDateTime(event.date)}
+                        <span aria-hidden="true">📅</span> {formatDateTime(event.date)}
                       </p>
                       <p>
-                        <span>👥</span> {registrationCount(event)} /{" "}
+                        <span aria-hidden="true">👥</span> {attendees} /{" "}
                         {event.maxAttendees || "∞"} registered
                       </p>
                       <p>
-                        <span>🏷</span> {event.category || "General"}
+                        <span aria-hidden="true">🏷</span> {event.category || "General"}
                       </p>
                     </div>
 
-                    <div className="event-stats-row">
+                    <div className="host-event__stats">
                       <div>
-                        <p className="label">Live Registrations</p>
-                        <h4>{registrationCount(event)}</h4>
+                        <p>Live Registration</p>
+                        <strong>{attendees}</strong>
                       </div>
                       <div>
-                        <p className="label">Remaining Seats</p>
-                        <h4>{seatsLeft(event)}</h4>
+                        <p>Remaining Seats</p>
+                        <strong>{seatsLeft(event)}</strong>
                       </div>
                       <div>
-                        <p className="label">Tickets Sold</p>
-                        <h4>{event.analytics?.totalTickets ?? registrationCount(event)}</h4>
+                        <p>Tickets Sold</p>
+                        <strong>{ticketCount(event)}</strong>
                       </div>
                       <div>
-                        <p className="label">Revenue</p>
-                        <h4>₹{revenue.toLocaleString()}</h4>
+                        <p>Revenue</p>
+                        <strong>{currency(revenue)}</strong>
                       </div>
                     </div>
 
-                    <div className="event-actions">
+                    <div className="host-event__actions">
                       <button
                         type="button"
+                        disabled={disableAttendeeActions}
                         onClick={() =>
                           (window.location.href = `/host/event/${event._id}/registrations`)
                         }
                       >
-                        View Attendees
+                        View Attendees ({attendees})
                       </button>
-                      <button type="button" onClick={() => handleExportCSV(event)}>
+                      <button type="button" disabled={disableAttendeeActions} onClick={() => handleExportCSV(event)}>
                         Export CSV
                       </button>
                       <button
                         type="button"
                         onClick={() => (window.location.href = `/event/${event._id}`)}
                       >
-                        Preview Event
+                        Preview Ticket
                       </button>
                       <button
                         type="button"

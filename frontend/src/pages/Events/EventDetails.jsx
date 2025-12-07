@@ -6,6 +6,7 @@ export default function EventDetails() {
   const { id } = useParams();
   const [event, setEvent] = useState(null);
   const [user, setUser] = useState(null);
+  const [userLoaded, setUserLoaded] = useState(false);
 
   useEffect(() => {
     loadEvent();
@@ -19,9 +20,24 @@ export default function EventDetails() {
   }
 
   async function loadUser() {
-    const res = await fetch("/api/users/me");
-    const data = await res.json();
-    setUser(data);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/users/me", {
+        headers: token
+          ? {
+              Authorization: `Bearer ${token}`,
+            }
+          : undefined,
+      });
+      if (!res.ok) throw new Error("User fetch failed");
+      const data = await res.json();
+      setUser(data);
+    } catch (err) {
+      console.error("Error fetching user", err);
+      setUser(null);
+    } finally {
+      setUserLoaded(true);
+    }
   }
 
   if (!event) return <p className="loading">Loading event...</p>;
@@ -85,7 +101,7 @@ export default function EventDetails() {
         )}
 
         {/* Register Button (Only for Attendee) */}
-        {user?.role === "attendee" && status === "Upcoming" && seatsLeft > 0 && (
+        {userLoaded && user?.role === "attendee" && status === "Upcoming" && seatsLeft > 0 && (
           <button
             className="register-btn"
             onClick={() => (window.location.href = `/register/${event._id}`)}
@@ -95,9 +111,9 @@ export default function EventDetails() {
         )}
 
         {/* If not attendee */}
-        {user?.role !== "attendee" && (
+        {userLoaded && user && user.role !== "attendee" && (
           <p className="info-note">
-            Only attendees can register for events.
+            {user.role === "host" ? "Host" : "Admin"} accounts cannot register. Please log in as an attendee.
           </p>
         )}
       </div>

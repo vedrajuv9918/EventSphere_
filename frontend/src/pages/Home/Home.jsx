@@ -2,58 +2,49 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import "./home.css";
 
-const features = [
-  {
-    icon: "🌀",
-    title: "Easy Registration",
-    description: "Register for events in seconds",
-  },
-  {
-    icon: "👥",
-    title: "Community Driven",
-    description: "Connect with like-minded people",
-  },
-  {
-    icon: "🤖",
-    title: "Smart Recommendations",
-    description: "AI-powered event suggestions",
-  },
+const heroStats = [
+  { label: "Easy Registration", description: "Register for events in seconds" },
+  { label: "Community Driven", description: "Connect with like-minded people" },
+  { label: "Personalized Discovery", description: "Get event suggestions tailored to you" },
+  { label: "Smart Recommendations", description: "AI-powered event suggestions" },
 ];
 
 const featuredEvents = [
   {
-    id: 1,
-    badge: ["Technology", "Completed"],
     title: "Tech Innovation Summit 2024",
-    description:
-      "Join industry leaders discussing the future of technology and innovation",
-    meta: [
-      "March 15, 2024",
-      "9:00 AM - 5:00 PM",
-      "San Francisco Convention Center",
-      "450 / 500 attendees",
-    ],
+    description: "Industry leaders discussing the future of technology and innovation.",
+    date: "March 15, 2024",
+    time: "9:00 AM - 5:00 PM",
+    location: "San Francisco Convention Center",
+    category: "Technology",
+    attendees: "487 / 500",
     price: "₹299",
-    status: "Registration Not Available",
+    image:
+      "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1000&q=80",
   },
   {
-    id: 2,
-    badge: ["Business", "Completed"],
     title: "Digital Marketing Workshop",
-    description:
-      "Learn the latest digital marketing strategies from experts.",
-    meta: ["March 20, 2024", "2:00 PM - 6:00 PM", "Online", "234 / 300 attendees"],
+    description: "Learn the latest digital marketing strategies from experts.",
+    date: "March 20, 2024",
+    time: "2:00 PM - 6:00 PM",
+    location: "Online",
+    category: "Business",
+    attendees: "234 / 300",
     price: "Free",
-    status: "Registration Not Available",
+    image:
+      "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=1000&q=80",
   },
   {
-    id: 3,
-    badge: ["Arts", "Completed"],
     title: "Art & Culture Festival",
     description: "Experience local art, music, and cultural performances.",
-    meta: ["April 5, 2024", "10:00 AM - 2:00 PM", "Central Park", "1250 / 3000 attendees"],
-    price: "$25",
-    status: "Registration Not Available",
+    date: "April 5, 2024",
+    time: "10:00 AM - 8:00 PM",
+    location: "Central Park",
+    category: "Arts",
+    attendees: "1,250 / 2,000",
+    price: "₹25",
+    image:
+      "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1000&q=80",
   },
 ];
 
@@ -71,93 +62,87 @@ export default function Home() {
 
   return (
     <div className="home-page">
-      <section className="hero">
-        <div className="hero-content">
-          <p className="eyebrow">EventSphere</p>
+      <section className="home-hero">
+        <div className="hero-overlay" aria-hidden="true" />
+        <div className="hero-inner">
+          <p className="hero-eyebrow">EventSphere</p>
           <h1>
-            Discover & Host
-            <br />
-            Amazing Events
+            Discover &amp; Host
+            <span> Amazing Events</span>
           </h1>
-          <p className="subtitle">
-            EventSphere brings together event organizers and attendees with AI-powered
-            recommendations and seamless registration.
+          <p className="hero-subtitle">
+            EventSphere brings together event organizers and attendees with AI-powered recommendations
+            and seamless registration.
           </p>
-          <div className="hero-cta">
-            <button
-              className="primary"
-              onClick={() => handleProtectedNav("/events")}
-            >
+          <div className="hero-actions">
+            <button className="btn primary" onClick={() => handleProtectedNav("/events")}>
               Browse Events
             </button>
-            <button
-              className="secondary"
-              onClick={() => handleProtectedNav("/host-dashboard")}
-            >
+            <button className="btn outline" onClick={() => handleProtectedNav("/host-dashboard")}>
               Create Event
             </button>
           </div>
-        </div>
-        <div className="hero-features">
-          {features.map((feature) => (
-            <div key={feature.title} className="feature-card">
-              <span className="feature-icon" aria-hidden="true">
-                {feature.icon}
-              </span>
-              <div>
-                <p className="feature-title">{feature.title}</p>
-                <p className="feature-desc">{feature.description}</p>
+
+          <div className="hero-stats">
+            {heroStats.map((stat) => (
+              <div key={stat.label} className="hero-stat-card">
+                <p className="stat-label">{stat.label}</p>
+                <p className="stat-description">{stat.description}</p>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
-      <section className="featured-section">
-        <div className="section-head">
+      <section className="home-featured">
+        <div className="section-header">
           <div>
-            <p className="eyebrow">Featured Events</p>
-            <h2>Discover the most popular events happening now</h2>
+            <p className="eyebrow">Featured</p>
+            <h2>Featured Events</h2>
+            <p className="section-description">
+              Discover the most popular events happening now across technology, business, arts, and more.
+            </p>
           </div>
-          <button className="text-link">View All</button>
+          <button className="btn ghost" onClick={() => navigate("/events")}>
+            View All
+          </button>
         </div>
 
         <div className="featured-grid">
           {featuredEvents.map((event) => (
-            <article key={event.id} className="featured-card">
-              <div className="card-top">
-                <div className="badge-row">
-                  {event.badge.map((label) => (
-                    <span key={label} className="badge">
-                      {label}
-                    </span>
-                  ))}
-                </div>
-                <p className="price">{event.price}</p>
+            <article key={event.title} className="featured-card">
+              <div className="card-image">
+                <img src={event.image} alt={event.title} loading="lazy" />
               </div>
-
-              <h3>{event.title}</h3>
-              <p className="card-desc">{event.description}</p>
-
-              <ul>
-                {event.meta.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-
-              <button className="disabled">{event.status}</button>
+              <div className="card-body">
+                <div className="card-badges">
+                  <span className="badge">{event.category}</span>
+                  <span className="badge secondary">Upcoming</span>
+                </div>
+                <h3>{event.title}</h3>
+                <p className="card-description">{event.description}</p>
+                <ul className="card-meta">
+                  <li>{event.date}</li>
+                  <li>{event.time}</li>
+                  <li>{event.location}</li>
+                  <li>{event.attendees}</li>
+                </ul>
+              </div>
+              <div className="card-footer">
+                <span className="price">{event.price}</span>
+                <button className="btn primary" onClick={() => handleProtectedNav("/events")}>
+                  Register Now
+                </button>
+              </div>
             </article>
           ))}
         </div>
       </section>
 
-      <section className="cta">
-        <p className="eyebrow">Ready to get started?</p>
-        <h2>Join thousands of event organizers and attendees on EventSphere</h2>
-        <button
-          className="primary"
-          onClick={() => navigate("/auth?mode=signup")}
-        >
+      <section className="home-cta">
+        <h2>Ready to get started?</h2>
+        <p>Join thousands of event organizers and attendees on EventSphere.</p>
+        <button className="btn primary" onClick={() => navigate("/auth?mode=signup")}>
           Create Your Account
         </button>
       </section>
