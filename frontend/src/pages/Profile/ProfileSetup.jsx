@@ -1,197 +1,259 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { UserService } from "../../services/userService";
 import "./profileSetup.css";
+import ProfileView from "./ProfileView";
+
+const STEPS = [
+  {
+    id: "roleType",
+    label: "Are you a Student or Working Professional?",
+    options: ["Student", "Working Professional", "Freelancer", "Entrepreneur"],
+  },
+  {
+    id: "areaOfInterest",
+    label: "What's your area of interest?",
+    options: ["Technology", "Business", "Entertainment", "Sports", "Arts & Culture", "Education"],
+  },
+  {
+    id: "preferredEventType",
+    label: "What type of events do you prefer?",
+    options: ["Workshop", "Webinar", "Fest", "Competition", "Networking", "Conference"],
+  },
+  {
+    id: "motivation",
+    label: "What motivates you to attend events?",
+    options: ["Learning", "Networking", "Entertainment", "Career Growth", "Community", "Personal Development"],
+  },
+  {
+    id: "city",
+    label: "Which city are you from?",
+    type: "input",
+    placeholder: "Enter your city",
+  },
+  {
+    id: "profilePic",
+    label: "Upload your profile picture (optional)",
+    type: "upload",
+  },
+];
+
+const INITIAL_FORM = {
+  roleType: "",
+  areaOfInterest: "",
+  preferredEventType: "",
+  motivation: "",
+  city: "",
+  profilePic: "",
+};
 
 export default function ProfileSetup() {
-  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
-
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    roleType: "", // student / worker
-    interests: [],
-    profilePic: ""
-  });
-
-  const interestOptions = [
-    "Music", "Sports", "Technology", "Workshops",
-    "Festivals", "Hackathons", "Seminars", "Gaming", "Cultural Events"
-  ];
+  const [step, setStep] = useState(0);
+  const [form, setForm] = useState(INITIAL_FORM);
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(true);
 
   useEffect(() => {
     async function loadUser() {
       try {
         const data = await UserService.me();
         setUser(data);
-
         setForm({
-          name: data.name || "",
-          phone: data.phone || "",
           roleType: data.roleType || "",
-          interests: data.interests || [],
-          profilePic: data.profilePic || ""
+          areaOfInterest: data.areaOfInterest || "",
+          preferredEventType: data.preferredEventType || "",
+          motivation: data.motivation || "",
+          city: data.city || "",
+          profilePic: data.profilePic || "",
         });
+        setEditing(!data.profileCompleted);
       } catch (err) {
-        console.log("Error loading profile:", err);
+        console.error("Error loading profile:", err);
+      } finally {
+        setLoading(false);
       }
     }
     loadUser();
   }, []);
 
-  function handleChange(e) {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const currentStep = useMemo(() => STEPS[step], [step]);
+  const isLastStep = step === STEPS.length - 1;
+  const isFirstStep = step === 0;
+
+  function handleSelect(value) {
+    setForm((prev) => ({ ...prev, [currentStep.id]: value }));
   }
 
-  function toggleInterest(item) {
-    setForm((prev) => ({
-      ...prev,
-      interests: prev.interests.includes(item)
-        ? prev.interests.filter((x) => x !== item)
-        : [...prev.interests, item]
-    }));
+  function handleInputChange(e) {
+    const { value } = e.target;
+    setForm((prev) => ({ ...prev, [currentStep.id]: value }));
   }
 
-  async function uploadImage(e) {
-    const file = e.target.files[0];
+  async function handleUpload(e) {
+    const file = e.target.files?.[0];
     if (!file) return;
 
     try {
-      const data = await UserService.uploadProfilePhoto(file);
-      setForm({ ...form, profilePic: data.url });
+      setUploading(true);
+      const response = await UserService.uploadProfilePhoto(file);
+      const url = response?.url || response?.imageUrl;
+      if (url) {
+        setForm((prev) => ({ ...prev, profilePic: url }));
+      }
     } catch (err) {
-      console.log("Upload failed:", err);
+      console.error("Upload failed:", err);
       alert(err.message || "Image upload failed");
+    } finally {
+      setUploading(false);
     }
   }
 
-  async function saveProfile() {
+  function canProceed() {
+    if (currentStep.type === "upload") {
+      return true;
+    }
+    if (currentStep.type === "input") {
+      return Boolean(form[currentStep.id]?.trim());
+    }
+    return Boolean(form[currentStep.id]);
+  }
+
+  function handleNext() {
+    if (!canProceed()) return;
+    if (!isLastStep) {
+      setStep((prev) => prev + 1);
+    }
+  }
+
+  function handleBack() {
+    if (!isFirstStep) {
+      setStep((prev) => prev - 1);
+    }
+  }
+
+  async function handleFinish() {
+    if (!canProceed()) return;
     try {
-      const data = await UserService.updateProfile(form);
-      alert(data.message || "Profile updated");
-      window.location.href = "/";
+      setSaving(true);
+      const payload = {
+        ...form,
+        profileCompleted: true,
+      };
+      const data = await UserService.updateProfile(payload);
+      setUser(data.user);
+      localStorage.setItem("user", JSON.stringify({ ...(JSON.parse(localStorage.getItem("user") || "{}")), ...data.user }));
+      setEditing(false);
     } catch (err) {
-      console.log("Profile save failed:", err);
+      console.error("Profile save failed:", err);
       alert(err.message || "Failed to save profile");
+    } finally {
+      setSaving(false);
     }
   }
 
-  if (!user) return <p className="loading">Loading...</p>;
+  const showProfileView = !editing && user?.profileCompleted;
+
+  if (loading) {
+    return <div className="profile-setup-loading">Loading profile...</div>;
+  }
+
+  if (showProfileView) {
+    return (
+      <ProfileView
+        user={user}
+        onEdit={() => {
+          setEditing(true);
+          setStep(0);
+        }}
+      />
+    );
+  }
 
   return (
-    <div className="profile-setup-container">
-      <div className={`step-card step-${step}`}>
-        
-        {/* STEP 1 - Basic Info */}
-        {step === 1 && (
-          <div className="step-content">
-            <h2>Basic Information</h2>
-
-            <input
-              type="text"
-              name="name"
-              placeholder="Your Name"
-              value={form.name}
-              onChange={handleChange}
-            />
-
-            <input
-              type="text"
-              name="phone"
-              placeholder="Phone Number"
-              value={form.phone}
-              onChange={handleChange}
-            />
-
-            <label className="role-label">You are a:</label>
-            <div className="role-options">
-              <button
-                className={`role-btn ${form.roleType === "student" ? "selected" : ""}`}
-                onClick={() => setForm({ ...form, roleType: "student" })}
-              >
-                Student
-              </button>
-
-              <button
-                className={`role-btn ${form.roleType === "worker" ? "selected" : ""}`}
-                onClick={() => setForm({ ...form, roleType: "worker" })}
-              >
-                Worker
-              </button>
+    <div className="profile-setup-page">
+      <div className="setup-shell">
+        <div className="setup-card">
+          <header className="setup-header">
+            <div>
+              <p className="eyebrow">Setup Your Profile</p>
+              <h1>{currentStep.label}</h1>
             </div>
+            {user?.profileCompleted && (
+              <button className="close-btn" onClick={() => setEditing(false)} aria-label="Close">
+                ×
+              </button>
+            )}
+          </header>
 
-            <button className="next-btn" onClick={() => setStep(2)}>Next</button>
-          </div>
-        )}
-
-        {/* STEP 2 - Interests */}
-        {step === 2 && (
-          <div className="step-content">
-            <h2>Select Your Interests</h2>
-
-            <div className="interests-grid">
-              {interestOptions.map((item) => (
-                <span
-                  key={item}
-                  className={`interest-tag ${
-                    form.interests.includes(item) ? "selected" : ""
-                  }`}
-                  onClick={() => toggleInterest(item)}
-                >
-                  {item}
-                </span>
+          <div className="step-meta">
+            <span>
+              Step {step + 1} of {STEPS.length}
+            </span>
+            <div className="step-indicator">
+              {STEPS.map((_, index) => (
+                <span key={_.id || index} className={index <= step ? "active" : ""} />
               ))}
             </div>
-
-            <div className="step-buttons">
-              <button className="back-btn" onClick={() => setStep(1)}>Back</button>
-              <button className="next-btn" onClick={() => setStep(3)}>Next</button>
-            </div>
           </div>
-        )}
 
-        {/* STEP 3 - Profile Picture */}
-        {step === 3 && (
-          <div className="step-content">
-            <h2>Upload Profile Picture</h2>
-
-            <div className="profile-pic-preview">
-              <img
-                src={form.profilePic || "/default-avatar.png"}
-                alt="Preview"
+          <div className="step-body">
+            {currentStep.type === "input" && (
+              <input
+                type="text"
+                placeholder={currentStep.placeholder}
+                value={form[currentStep.id] || ""}
+                onChange={handleInputChange}
               />
-            </div>
+            )}
 
-            <input type="file" onChange={uploadImage} />
+            {currentStep.type === "upload" && (
+              <div className="upload-panel">
+                <div className="upload-circle">
+                  {form.profilePic ? (
+                    <img src={form.profilePic} alt="Profile preview" />
+                  ) : (
+                    <span>&uarr;</span>
+                  )}
+                </div>
+                <label className="upload-btn">
+                  {uploading ? "Uploading..." : form.profilePic ? "Change Photo" : "Upload Photo"}
+                  <input type="file" accept="image/*" onChange={handleUpload} disabled={uploading} />
+                </label>
+              </div>
+            )}
 
-            <div className="step-buttons">
-              <button className="back-btn" onClick={() => setStep(2)}>Back</button>
-              <button className="next-btn" onClick={() => setStep(4)}>Next</button>
-            </div>
+            {!currentStep.type && (
+              <div className="option-grid">
+                {currentStep.options.map((option) => (
+                  <button
+                    type="button"
+                    key={option}
+                    className={`option-btn ${form[currentStep.id] === option ? "selected" : ""}`}
+                    onClick={() => handleSelect(option)}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        )}
 
-        {/* STEP 4 - Review & Save */}
-        {step === 4 && (
-          <div className="step-content">
-            <h2>Review Your Profile</h2>
-
-            <div className="review-card">
-              <p><strong>Name:</strong> {form.name}</p>
-              <p><strong>Phone:</strong> {form.phone}</p>
-              <p><strong>Role:</strong> {form.roleType}</p>
-              <p><strong>Interests:</strong> {form.interests.join(", ")}</p>
-
-              <img src={form.profilePic || "/default-avatar.png"} alt="Profile" />
-            </div>
-
-            <div className="step-buttons">
-              <button className="back-btn" onClick={() => setStep(3)}>Back</button>
-              <button className="save-btn" onClick={saveProfile}>Save Profile</button>
-            </div>
-          </div>
-        )}
-
+          <footer className="step-footer">
+            <button type="button" className="ghost-nav" onClick={handleBack} disabled={isFirstStep}>
+              Back
+            </button>
+            <button
+              type="button"
+              className="primary-nav"
+              onClick={isLastStep ? handleFinish : handleNext}
+              disabled={!canProceed() || saving}
+            >
+              {isLastStep ? (saving ? "Saving..." : "Finish") : "Next"}
+            </button>
+          </footer>
+        </div>
       </div>
     </div>
   );

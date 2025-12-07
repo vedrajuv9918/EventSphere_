@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./hostEventSettings.css";
 import { useParams } from "react-router-dom";
+import { HostService } from "../../services/hostService";
 
 export default function HostEventSettings() {
   const { id } = useParams();
@@ -17,12 +18,12 @@ export default function HostEventSettings() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`/api/host/event/${id}/settings`);
-        const data = await res.json();
+        const data = await HostService.eventSettings(id);
         setEvent(data.event);
         setSettings(data.settings);
       } catch (err) {
         console.log("Error loading settings:", err);
+        alert(err.message || "Unable to load settings");
       }
     }
     load();
@@ -37,14 +38,12 @@ export default function HostEventSettings() {
   }
 
   async function saveSettings() {
-    const res = await fetch(`/api/host/event/${id}/settings`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(settings),
-    });
-
-    const data = await res.json();
-    alert(data.message);
+    try {
+      const data = await HostService.updateEventSettings(id, settings);
+      alert(data.message || "Settings updated");
+    } catch (err) {
+      alert(err.message || "Unable to update settings");
+    }
   }
 
   if (!event) return <p className="loading">Loading settings...</p>;

@@ -10,6 +10,8 @@ import TicketPage from "../pages/Tickets/TicketPage";
 
 import AttendeeDashboard from "../pages/Attendee/AttendeeDashboard";
 import HostDashboard from "../pages/Host/HostDashboard";
+import HostEventRegistrations from "../pages/Host/HostEventRegistrations";
+import HostEventSettings from "../pages/Host/HostEventSettings";
 import AdminDashboard from "../pages/Admin/AdminDashboard";
 
 import ProfileSetup from "../pages/Profile/ProfileSetup";
@@ -28,6 +30,8 @@ export default function AppRoutes() {
 
       <Route path="/attendee-dashboard" element={<AttendeeDashboard />} />
       <Route path="/host-dashboard" element={<HostDashboard />} />
+      <Route path="/host/event/:id/registrations" element={<HostEventRegistrations />} />
+      <Route path="/host/event/:id/settings" element={<HostEventSettings />} />
       <Route path="/admin-dashboard" element={<AdminDashboard />} />
 
       <Route path="/profile" element={<ProfileSetup />} />

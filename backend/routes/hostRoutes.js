@@ -10,5 +10,7 @@ router.get("/my-events", auth, allowRoles("host"), hostCtrl.getHostEvents);
 router.get("/registrations/:eventId", auth, allowRoles("host"), hostCtrl.getRegistrationsForEvent);
 router.get("/event/insights/:eventId", auth, allowRoles("host"), hostCtrl.getEventInsights);
 router.get("/event/export/:eventId", auth, allowRoles("host"), hostCtrl.exportRegistrationsCSV);
+router.get("/event/:id/settings", auth, allowRoles("host"), hostCtrl.getEventSettings);
+router.put("/event/:id/settings", auth, allowRoles("host"), hostCtrl.updateEventSettings);
 
 module.exports = router;

@@ -72,7 +72,11 @@ function normalizeTeamMembers(input) {
 
 exports.getAllEvents = async (req, res) => {
   try {
-    const events = await Event.find({ isActive: true, approved: true }).sort({ date: 1 });
+    const now = new Date();
+    const events = await Event.find({
+      adminRejected: { $ne: true },
+      $or: [{ approved: true }, { date: { $gte: now } }],
+    }).sort({ date: 1 });
     const synced = await Promise.all(events.map((evt) => syncEventStatus(evt)));
     res.json(synced);
   } catch (err) {
@@ -135,6 +139,7 @@ exports.getMyRegistrations = async (req, res) => {
     const payload = registrations.map((reg) => ({
       id: reg._id,
       event: reg.event,
+      ticketId: reg.ticketId,
       seats: reg.seats,
       registrationStatus: reg.registrationStatus,
       paymentStatus: reg.paymentStatus,

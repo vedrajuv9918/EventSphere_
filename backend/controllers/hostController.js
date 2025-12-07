@@ -1,3 +1,94 @@
+function coerceBoolean(value, fallback) {
+  if (value === undefined || value === null) return fallback;
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    return value === "true" || value === "1" || value.toLowerCase() === "on";
+  }
+  if (typeof value === "number") return value === 1;
+  return fallback;
+}
+
+function toDateInputValue(date) {
+  if (!date) return "";
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toISOString();
+}
+
+exports.getEventSettings = async (req, res) => {
+  try {
+    const event = await loadHostEvent(req.params.id, req.user._id);
+    res.json({
+      event: {
+        id: event._id,
+        title: event.title,
+        date: event.date,
+        status: event.status,
+        adminRejected: event.adminRejected,
+        rejectReason: event.rejectReason,
+      },
+      settings: {
+        isActive: event.isActive,
+        registrationDeadline: toDateInputValue(event.registrationDeadline),
+        oneSeatPerUser: event.oneSeatPerUser,
+        allowCancellation: event.allowCancellation,
+        enableReminders: event.enableReminders,
+        maxTicketsPerUser: event.teamLimit || 1,
+      },
+    });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ error: err.message || "Unable to load settings" });
+  }
+};
+
+exports.updateEventSettings = async (req, res) => {
+  try {
+    const event = await loadHostEvent(req.params.id, req.user._id);
+    const body = req.body || {};
+
+    const boolFields = [
+      { key: "isActive", target: "isActive" },
+      { key: "oneSeatPerUser", target: "oneSeatPerUser" },
+      { key: "allowCancellation", target: "allowCancellation" },
+      { key: "enableReminders", target: "enableReminders" },
+    ];
+
+    boolFields.forEach(({ key, target }) => {
+      if (body[key] !== undefined) {
+        event[target] = coerceBoolean(body[key], event[target]);
+      }
+    });
+
+    if (body.registrationDeadline !== undefined) {
+      event.registrationDeadline = body.registrationDeadline
+        ? new Date(body.registrationDeadline)
+        : null;
+    }
+
+    if (body.maxTicketsPerUser !== undefined) {
+      const limit = Number(body.maxTicketsPerUser);
+      event.teamLimit = Number.isNaN(limit) || limit <= 0 ? 1 : limit;
+      event.oneSeatPerUser = event.teamLimit === 1 ? event.oneSeatPerUser : false;
+    }
+
+    await event.save();
+
+    res.json({
+      success: true,
+      message: "Settings updated",
+      settings: {
+        isActive: event.isActive,
+        registrationDeadline: toDateInputValue(event.registrationDeadline),
+        oneSeatPerUser: event.oneSeatPerUser,
+        allowCancellation: event.allowCancellation,
+        enableReminders: event.enableReminders,
+        maxTicketsPerUser: event.teamLimit || 1,
+      },
+    });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ error: err.message || "Unable to update settings" });
+  }
+};
 const Event = require("../models/Event");
 const Registration = require("../models/Registration");
 const Ticket = require("../models/Ticket");

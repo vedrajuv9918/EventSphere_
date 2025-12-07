@@ -13,8 +13,13 @@ export default function Navbar() {
   const role = user?.role;
   const hideBrowseButton = role === "host" || role === "admin";
   const avatarSrc = user?.profilePic || "";
-  const avatarInitial =
-    (user?.name ? user.name.trim().charAt(0).toUpperCase() : "E") || "E";
+  const avatarInitial = (user?.name || "EventSphere")
+    .trim()
+    .split(" ")
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("")
+    .slice(0, 2) || "E";
 
   useEffect(() => {
     function handleClickOutside(e) {

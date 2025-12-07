@@ -23,14 +23,34 @@ const quickFilters = ["All Events", "Upcoming", "Completed", "Technology", "Busi
 
 export default function EventList() {
   const [events, setEvents] = useState([]);
+  const [registeredIds, setRegisteredIds] = useState(new Set());
+  const [activeEventId, setActiveEventId] = useState(null);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All Categories");
   const [activeFilter, setActiveFilter] = useState("All Events");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const storedUser = useMemo(() => {
+    try {
+      if (typeof window === "undefined") return null;
+      const raw = localStorage.getItem("user");
+      return raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      console.warn("Failed to parse stored user", err);
+      return null;
+    }
+  }, []);
+  const userRole = storedUser?.role || null;
+  const isHostOrAdmin = userRole === "host" || userRole === "admin";
+  const activeEvent = useMemo(
+    () => events.find((evt) => evt._id === activeEventId) || null,
+    [events, activeEventId]
+  );
+
   useEffect(() => {
     loadEvents();
+    loadRegistrations();
   }, []);
 
   async function loadEvents() {
@@ -48,6 +68,23 @@ export default function EventList() {
     }
   }
 
+  async function loadRegistrations() {
+    if (typeof window === "undefined") return;
+    const token = localStorage.getItem("token");
+    if (!token || userRole !== "attendee") return;
+    try {
+      const registrations = await EventService.myRegistrations();
+      const ids = new Set(
+        (registrations || [])
+          .map((reg) => reg.event?._id || reg.eventId || reg.event)
+          .filter(Boolean)
+      );
+      setRegisteredIds(ids);
+    } catch (err) {
+      console.warn("Unable to load registrations for CTA state", err);
+    }
+  }
+
   const categories = useMemo(() => {
     const set = new Set();
     events.forEach((event) => {
@@ -56,38 +93,50 @@ export default function EventList() {
     return ["All Categories", ...Array.from(set)];
   }, [events]);
 
-  function getStatus(event) {
-    if (!event) return "Upcoming";
-    const backendStatus = event.status
-      ? event.status.charAt(0).toUpperCase() + event.status.slice(1)
-      : null;
-    if (backendStatus === "Rejected") return "Rejected";
-    if (backendStatus === "Completed") return "Completed";
-
-    const today = new Date();
+  function getStatusMeta(event) {
+    if (!event) return { code: "upcoming", label: "Upcoming" };
+    const now = new Date();
     const eventDate = event.date ? new Date(event.date) : null;
-    if (eventDate && eventDate < today) return "Completed";
-    if (event.currentAttendees >= event.maxAttendees) return "Full";
-    return backendStatus || "Upcoming";
+    const backendStatus = (event.status || "").toLowerCase();
+
+    if (event.adminRejected || backendStatus === "rejected") {
+      return { code: "rejected", label: "Rejected" };
+    }
+
+    if (eventDate && eventDate < now) {
+      return { code: "completed", label: "Completed" };
+    }
+
+    if (event.maxAttendees && event.currentAttendees >= event.maxAttendees) {
+      return { code: "full", label: "Full" };
+    }
+
+    if (backendStatus === "approved") {
+      return { code: "upcoming", label: "Upcoming" };
+    }
+
+    return {
+      code: "upcoming-pending",
+      label: "Upcoming · Awaiting Approval",
+    };
   }
 
-  function matchesQuickFilter(event) {
+  function matchesQuickFilter(event, statusMeta) {
     if (activeFilter === "All Events") return true;
-    const status = getStatus(event);
-    if (activeFilter === "Upcoming") return status === "Upcoming";
-    if (activeFilter === "Completed") return status === "Completed";
+    if (activeFilter === "Upcoming") {
+      return statusMeta.code === "upcoming" || statusMeta.code === "upcoming-pending";
+    }
+    if (activeFilter === "Completed") return statusMeta.code === "completed";
     const tag = event.category || event.type || "General";
     return tag === activeFilter;
   }
 
   const filteredEvents = events.filter((event) => {
-    const titleMatch = event.title
-      ?.toLowerCase()
-      .includes(search.toLowerCase());
+    const statusMeta = getStatusMeta(event);
+    const titleMatch = event.title?.toLowerCase().includes(search.toLowerCase());
     const cat = event.category || event.type || "General";
-    const categoryMatch =
-      category === "All Categories" || cat === category;
-    return titleMatch && categoryMatch && matchesQuickFilter(event);
+    const categoryMatch = category === "All Categories" || cat === category;
+    return titleMatch && categoryMatch && matchesQuickFilter(event, statusMeta);
   });
 
   function formatDate(dateString) {
@@ -107,10 +156,181 @@ export default function EventList() {
     });
   }
 
-  function getCTA(status) {
-    if (status === "Completed") return { label: "Already Registered", disabled: true };
-    if (status === "Full") return { label: "Waitlist", disabled: true };
+  function getCTA(event, statusMeta) {
+    const now = new Date();
+    const registrationDeadline = event.registrationDeadline ? new Date(event.registrationDeadline) : null;
+    const deadlinePassed = registrationDeadline && registrationDeadline < now;
+    const eventPassed = event.date && new Date(event.date) < now;
+    const userRegistered = registeredIds.has(event._id);
+
+    if (statusMeta.code === "rejected") {
+      return { label: "Registration Not Available", disabled: true };
+    }
+
+    if (userRegistered) {
+      return { label: "Already Registered", disabled: true };
+    }
+
+    if (statusMeta.code === "upcoming-pending") {
+      return { label: "Pending Approval", disabled: true };
+    }
+
+    if (deadlinePassed || eventPassed || statusMeta.code === "completed") {
+      return {
+        label: "Registration Not Available",
+        disabled: true,
+      };
+    }
+
+    if (statusMeta.code === "full") {
+      return { label: "Waitlist", disabled: true };
+    }
+
     return { label: "Register Now", disabled: false };
+  }
+
+  function handleCardSelect(event) {
+    if (!event) return;
+    setActiveEventId(event._id);
+  }
+
+  function closeActiveEvent() {
+    setActiveEventId(null);
+  }
+
+  useEffect(() => {
+    if (!activeEvent) return undefined;
+    function handleKeyDown(e) {
+      if (e.key === "Escape") {
+        closeActiveEvent();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [activeEvent]);
+
+  function renderCard(event, { variant = "grid" } = {}) {
+    if (!event) return null;
+    const statusMeta = getStatusMeta(event);
+    const badgeTone =
+      statusMeta.code === "upcoming-pending"
+        ? "pending"
+        : statusMeta.code.startsWith("upcoming")
+        ? "success"
+        : "muted";
+    const categoryLabel = event.category || event.type || "General";
+    const seatsLeft =
+      typeof event.maxAttendees === "number"
+        ? Math.max(event.maxAttendees - (event.currentAttendees || 0), 0)
+        : null;
+    const attendees = event.maxAttendees
+      ? `${event.currentAttendees || 0} / ${event.maxAttendees} attendees`
+      : `${event.currentAttendees || 0} attendees`;
+    const rawPrice =
+      event.ticketPrice ?? event.price ?? event.amount ?? event.cost ?? event.ticket_price ?? null;
+    const formattedPrice = formatPriceValue(rawPrice);
+    const price = formattedPrice || "Free";
+    const cta = getCTA(event, statusMeta);
+    const posterSrc =
+      event.posterUrl ||
+      event.imageUrl ||
+      event.poster ||
+      event.banner ||
+      event.coverImage ||
+      FALLBACK_IMAGE;
+    const cardClasses = ["event-card-modern"];
+    if (variant === "grid") cardClasses.push("clickable");
+    if (variant === "modal") cardClasses.push("modal");
+
+    const cardProps = {
+      key: variant === "grid" ? event._id : `${event._id}-preview`,
+      className: cardClasses.join(" "),
+    };
+
+    if (variant === "grid") {
+      cardProps.onClick = () => handleCardSelect(event);
+      cardProps.onKeyDown = (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleCardSelect(event);
+        }
+      };
+      cardProps.role = "button";
+      cardProps.tabIndex = 0;
+      cardProps["aria-label"] = `Preview ${event.title || "event"}`;
+    }
+
+    return (
+      <article {...cardProps}>
+        <div className="card-image">
+          <img src={posterSrc} alt={event.title} />
+          <div className="card-badges">
+            <span className="badge">{categoryLabel}</span>
+            <span className={`badge ${badgeTone}`}>{statusMeta.label}</span>
+          </div>
+          <span className="price-tag">{price}</span>
+        </div>
+
+        <div className="card-body">
+          <h3>{event.title}</h3>
+          <p className="card-description">{event.description}</p>
+
+          <ul className="card-meta">
+            <li>
+              <span className="meta-icon">📅</span>
+              {formatDate(event.date)}
+            </li>
+            <li>
+              <span className="meta-icon">⏰</span>
+              {formatTime(event.date)}
+            </li>
+            <li>
+              <span className="meta-icon">📍</span>
+              {event.venue || "Venue TBA"}
+            </li>
+            <li>
+              <span className="meta-icon">👥</span>
+              {attendees}
+            </li>
+            {typeof seatsLeft === "number" && (
+              <li>
+                <span className="meta-icon">🎟</span>
+                Seats left: {seatsLeft}
+              </li>
+            )}
+          </ul>
+        </div>
+
+        <div className="card-footer">
+          {isHostOrAdmin ? (
+            <p
+              className="cta-note"
+              onClick={(e) => {
+                if (variant === "grid") e.stopPropagation();
+              }}
+            >
+              Host/Admin accounts cannot register. Please log in as an attendee.
+            </p>
+          ) : (
+            <button
+              type="button"
+              className={`cta ${cta.disabled ? "secondary" : ""}`}
+              onClick={(e) => {
+                if (variant === "grid") {
+                  e.stopPropagation();
+                }
+                if (!cta.disabled) {
+                  window.location.href = `/register/${event._id}`;
+                }
+              }}
+              disabled={cta.disabled}
+            >
+              {cta.label}
+            </button>
+          )}
+        </div>
+      </article>
+    );
   }
 
   return (
@@ -188,94 +408,27 @@ export default function EventList() {
           </p>
         )}
 
-        {filteredEvents.map((event) => {
-          const status = getStatus(event);
-          const categoryLabel = event.category || event.type || "General";
-          const seatsLeft =
-            typeof event.maxAttendees === "number"
-              ? Math.max(event.maxAttendees - (event.currentAttendees || 0), 0)
-              : null;
-          const attendees = event.maxAttendees
-            ? `${event.currentAttendees || 0} / ${event.maxAttendees} attendees`
-            : `${event.currentAttendees || 0} attendees`;
-          const rawPrice =
-            event.ticketPrice ??
-            event.price ??
-            event.amount ??
-            event.cost ??
-            event.ticket_price ??
-            null;
-          const formattedPrice = formatPriceValue(rawPrice);
-          const price = formattedPrice || "Free";
-          const cta = getCTA(status);
-          const posterSrc =
-            event.posterUrl ||
-            event.imageUrl ||
-            event.poster ||
-            event.banner ||
-            event.coverImage ||
-            FALLBACK_IMAGE;
-
-          return (
-            <article key={event._id} className="event-card-modern">
-              <div className="card-image">
-                <img
-                  src={posterSrc}
-                  alt={event.title}
-                />
-                <div className="card-badges">
-                  <span className="badge">{categoryLabel}</span>
-                  <span className={`badge ${status !== "Upcoming" ? "muted" : "success"}`}>
-                    {status}
-                  </span>
-                </div>
-                <span className="price-tag">{price}</span>
-              </div>
-
-              <div className="card-body">
-                <h3>{event.title}</h3>
-                <p className="card-description">{event.description}</p>
-
-                <ul className="card-meta">
-                  <li>
-                    <span className="meta-icon">📅</span>
-                    {formatDate(event.date)}
-                  </li>
-                  <li>
-                    <span className="meta-icon">⏰</span>
-                    {formatTime(event.date)}
-                  </li>
-                  <li>
-                    <span className="meta-icon">📍</span>
-                    {event.venue || "Venue TBA"}
-                  </li>
-                  <li>
-                    <span className="meta-icon">👥</span>
-                    {attendees}
-                  </li>
-                  {typeof seatsLeft === "number" && (
-                    <li>
-                      <span className="meta-icon">🎟</span>
-                      Seats left: {seatsLeft}
-                    </li>
-                  )}
-                </ul>
-              </div>
-
-              <div className="card-footer">
-                <button
-                  type="button"
-                  className={`cta ${cta.disabled ? "secondary" : ""}`}
-                  onClick={() => (window.location.href = `/event/${event._id}`)}
-                  disabled={cta.disabled}
-                >
-                  {cta.label}
-                </button>
-              </div>
-            </article>
-          );
-        })}
+        {filteredEvents.map((event) => renderCard(event))}
       </section>
+
+      {activeEvent && (
+        <>
+          <div className="event-card-overlay" onClick={closeActiveEvent} />
+          <div className="event-card-modal" role="dialog" aria-modal="true" aria-label="Event preview">
+            <div className="event-modal-content">
+              <button
+                type="button"
+                className="event-modal-close"
+                onClick={closeActiveEvent}
+                aria-label="Close event preview"
+              >
+                ×
+              </button>
+              {renderCard(activeEvent, { variant: "modal" })}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

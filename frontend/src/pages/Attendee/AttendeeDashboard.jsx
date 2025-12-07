@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AttendeeService } from "../../services/attendeeService";
 import "./attendeeDashboard.css";
+import defaultAvatar from "../../assets/default-avatar.svg";
 
 const recommendedEvents = [
   {
@@ -69,10 +70,23 @@ export default function AttendeeDashboard() {
   }, [registeredEvents]);
 
   function badgeForEvent(reg) {
-    const eventDate = reg.event?.date ? new Date(reg.event.date) : null;
-    if (eventDate && eventDate < new Date()) {
+    const event = reg.event || {};
+    const now = new Date();
+    const eventDate = event.date ? new Date(event.date) : null;
+    const backendStatus = (event.status || "").toLowerCase();
+
+    if (event.adminRejected || backendStatus === "rejected") {
+      return { label: "Rejected", className: "status-badge muted" };
+    }
+
+    if (eventDate && eventDate < now) {
       return { label: "Completed", className: "status-badge muted" };
     }
+
+    if (!event.approved && !event.adminRejected) {
+      return { label: "Upcoming · Not Approved", className: "status-badge pending" };
+    }
+
     return { label: "Upcoming", className: "status-badge success" };
   }
 
@@ -101,7 +115,7 @@ export default function AttendeeDashboard() {
             Browse Events
           </button>
           <button type="button" className="profile-chip" onClick={() => navigate("/profile")}>
-            <img src={user.profilePic || "/default-avatar.png"} alt="Profile avatar" />
+            <img src={user.profilePic || defaultAvatar} alt="Profile avatar" />
             <span>{user.name || "Complete profile"}</span>
           </button>
         </div>

@@ -14,4 +14,7 @@ export const HostService = {
       auth: true,
       headers: { Accept: "text/csv" },
     }),
+  eventSettings: (eventId) => apiClient.get(`/host/event/${eventId}/settings`, { auth: true }),
+  updateEventSettings: (eventId, payload) =>
+    apiClient.put(`/host/event/${eventId}/settings`, payload, { auth: true }),
 };

@@ -9,7 +9,12 @@ const userSchema = new mongoose.Schema(
     profilePic: String,
     phone: String,
     roleType: String, // "student" / "worker"
-    interests: [String]
+    interests: [String],
+    areaOfInterest: String,
+    preferredEventType: String,
+    motivation: String,
+    city: String,
+    profileCompleted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

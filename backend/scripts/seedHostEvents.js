@@ -48,7 +48,7 @@ const EVENT_TEMPLATES = [
     ticketPrice: 0,
     maxAttendees: 250,
     posterUrl:
-      "https://images.unsplash.com/photo-1522199873710-1e2f9a1232f2?auto=format&fit=crop&w=1200&q=80",
+      "https://ff.co/wp-content/uploads/2025/06/APPROVED_GOH_FFAsia25_0927_J74008462-1920x1280.jpg",
   },
   {
     title: "AI & Automation Summit 2025",
@@ -78,7 +78,7 @@ const EVENT_TEMPLATES = [
     title: "Indie Film Night & Director's Circle",
     description:
       "Screenings from upcoming indie filmmakers followed by panel discussions, pitch rooms, and networking mixers.",
-    date: "2025-01-18T18:30:00Z",
+    date: "2025-12-18T18:30:00Z",
     venue: "PVR Directors Cut, New Delhi",
     category: "Entertainment",
     ticketPrice: 550,
@@ -97,6 +97,54 @@ const EVENT_TEMPLATES = [
     maxAttendees: 180,
     posterUrl:
       "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    title: "Future of Mobility Expo",
+    description:
+      "Experience autonomous pods, EV test drives, and product launches from the newest mobility startups.",
+    date: "2026-01-05T10:30:00Z",
+    venue: "Hitex Exhibition Center, Hyderabad",
+    category: "Technology",
+    ticketPrice: 899,
+    maxAttendees: 800,
+    posterUrl:
+      "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    title: "Urban Wellness Weekender",
+    description:
+      "Guided breath-work, cold plunge labs, and nutrition keynotes to recharge busy professionals.",
+    date: "2025-08-16T07:00:00Z",
+    venue: "Cubbon Park Amphitheatre, Bengaluru",
+    category: "Lifestyle",
+    ticketPrice: 1299,
+    maxAttendees: 300,
+    posterUrl:
+      "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    title: "Indie Dev Showcase & Game Jam",
+    description:
+      "48-hour jam with mentorship, playable demos, and publishing talks from leading studios.",
+    date: "2025-09-12T09:00:00Z",
+    venue: "Phoenix Tech Arena, Pune",
+    category: "Entertainment",
+    ticketPrice: 499,
+    maxAttendees: 400,
+    posterUrl:
+      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1200&q=80",
+  },
+  {
+    title: "Climate Tech Builder Summit",
+    description:
+      "Founders and policy makers co-design pilots covering carbon capture, water security, and agritech.",
+    date: "2025-12-23T09:30:00Z",
+    venue: "Indian Habitat Centre, New Delhi",
+    category: "Business",
+    ticketPrice: 0,
+    maxAttendees: 250,
+    posterUrl:
+      "https://images.unsplash.com/photo-1470246973918-29a93221c455?auto=format&fit=crop&w=1200&q=80",
   },
 ];
 

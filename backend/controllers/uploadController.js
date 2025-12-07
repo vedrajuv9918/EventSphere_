@@ -3,6 +3,11 @@ exports.uploadImage = (req, res) => {
     return res.status(400).json({ error: "No file uploaded" });
   }
 
-  const url = `/uploads/${req.file.filename}`;
-  res.json({ success: true, imageUrl: url });
+  const relativePath = `/api/uploads/${req.file.filename}`;
+  const origin =
+    process.env.SERVER_PUBLIC_URL ||
+    `${req.protocol}://${req.get("host")}`;
+  const absoluteUrl = `${origin}${relativePath}`;
+
+  res.json({ success: true, url: absoluteUrl, path: relativePath });
 };
