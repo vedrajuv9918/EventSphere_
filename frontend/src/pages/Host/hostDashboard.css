@@ -254,16 +254,27 @@
 
 .host-event__actions button {
   border-radius: 999px;
-  border: 1px solid #dce3f3;
-  background: #fff;
+  border: none;
+  background: #111827;
+  color: #fff;
   padding: 10px 18px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease;
+  box-shadow: 0 16px 30px rgba(17, 24, 39, 0.2);
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .host-event__actions button:hover:not(:disabled) {
-  background: #f4f7fb;
+  background: #0b1221;
+  transform: translateY(-1px);
+  box-shadow: 0 20px 35px rgba(17, 24, 39, 0.25);
+}
+
+.host-event__actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
 }
 
 .empty-message {

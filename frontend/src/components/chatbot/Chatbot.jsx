@@ -69,21 +69,13 @@ export default function Chatbot() {
         onClick={() => setOpen(!open)}
         type="button"
       >
-        <svg viewBox="0 0 64 64" role="presentation" aria-hidden="true">
-          <defs>
-            <linearGradient id="chatBubbleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#7dd3fc" />
-              <stop offset="100%" stopColor="#6366f1" />
-            </linearGradient>
-          </defs>
+        <svg viewBox="0 0 32 32" role="presentation" aria-hidden="true">
+          <circle cx="16" cy="16" r="16" fill="#464A57" />
           <path
-            d="M12 14c0-4.4 3.6-8 8-8h24c4.4 0 8 3.6 8 8v20c0 4.4-3.6 8-8 8H26l-9.5 7.6c-1.3 1-3.1 0-3.1-1.6V14Z"
-            fill="url(#chatBubbleGradient)"
-          />
-          <path
-            d="M22 23h20M22 31h12"
+            d="M9.2 13.2c0-3.02 2.448-5.47 5.468-5.47h2.664c3.02 0 5.468 2.45 5.468 5.47v2.2c0 3.02-2.448 5.47-5.468 5.47h-.82l-3 2.38c-.78.62-1.92.05-1.92-.91v-1.46c-1.5-.69-2.39-2.2-2.39-3.87v-2.83Z"
+            fill="none"
             stroke="#fff"
-            strokeWidth="3"
+            strokeWidth="1.6"
             strokeLinecap="round"
             strokeLinejoin="round"
           />

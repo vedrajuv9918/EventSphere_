@@ -13,6 +13,8 @@ const registrationSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     event: { type: mongoose.Schema.Types.ObjectId, ref: "Event", required: true },
+    userId: { type: String, index: true },
+    eventId: { type: String, index: true },
 
     seats: { type: Number, default: 1 },
     teamName: String,
@@ -43,5 +45,17 @@ const registrationSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+registrationSchema.index({ eventId: 1, userId: 1 }, { unique: true });
+
+registrationSchema.pre("save", function (next) {
+  if (!this.userId && this.user) {
+    this.userId = this.user.toString();
+  }
+  if (!this.eventId && this.event) {
+    this.eventId = this.event.toString();
+  }
+  next();
+});
 
 module.exports = mongoose.model("Registration", registrationSchema);
